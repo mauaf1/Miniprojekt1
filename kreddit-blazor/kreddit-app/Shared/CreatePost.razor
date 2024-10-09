@@ -1,0 +1,46 @@
+﻿@using kreddit_app.Data;
+@using shared.Model;
+@inject ApiService apiService
+
+<div>
+    <br />
+    <h3>Create a new Post</h3>
+    <input placeholder="Title" type="input" id="postTitle" @bind-value="postTitle" />
+    <input placeholder="Content (URL)" type="url" id="postContent" @bind-value="postContent" />
+    <input placeholder="User" type="input" id="User" @bind-value="User" />
+    <button id="createPostButton" type="button" @onclick="CreateNewPost">Create Post</button>
+</div>
+
+@code {
+    private string? postTitle;
+    private string? postContent;
+    private string? User;
+
+    @inject NavigationManager NavigationManager;
+
+    private async void CreateNewPost()
+    {
+        Console.WriteLine("Creating new post");
+        if (postTitle == null || postContent == null)
+        {
+            return;
+        }
+        Console.WriteLine(postTitle + " " + postContent);
+        // TODO: Provide list of users from dropdown, or maybe just convert
+        // from username to UserId
+
+        DateTime currentDate = DateTime.Now;
+        int upvote = 0;   // Default value for new comments
+        int downvote = 0; // Default value for new comments
+
+        await apiService.CreatePost(postTitle, postContent, User, currentDate, upvote, downvote); 
+        StateHasChanged();
+        NavigationManager.NavigateTo("/", true);
+    }
+    private bool IsValidUrl(string url)
+    {
+        // Check if the input string is a valid URL
+        return Uri.TryCreate(url, UriKind.Absolute, out Uri? uriResult)
+            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+    }
+}

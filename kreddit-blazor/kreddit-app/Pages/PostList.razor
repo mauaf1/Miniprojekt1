@@ -1,0 +1,85 @@
+﻿@inherits LayoutComponentBase
+
+@using kreddit_app.Data;
+@using shared.Model;
+@inject ApiService apiService
+
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+@if (posts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Content</th>
+            <th colspan="4">Votes</th>
+            <th> Date</th>
+        </tr>
+        @foreach (var post in posts)
+        {
+            <tr>
+                <!-- 
+                    These a href links will match the route in the page 'PostItem.razor'.
+                    The route is defined as "/post/{id}" and the id is the post id.
+                -->
+                <td><a href="/post/@post.PostId">@post.Title</a></td>
+                <td>
+                    @if (IsValidUrl(post.Content))
+                    {
+                        <a href="@post.Content" target="_blank">@post.Content</a>
+                    }
+                    else
+                    {
+                        @post.Content
+                    }
+                </td>
+                <td>@(post.Upvote)</td>
+                <td><button @onclick="() => Upvote((int)post.PostId)">Upvote</button></td>
+                <td>@(post.Downvote)</td>
+                <td><button @onclick="() => Downvote((int)post.PostId)">Downvote</button></td>
+				<td>@(post.Date)</td>
+			</tr>
+           
+        }
+    </table>
+
+    <br/>
+}
+
+@code {
+    private Post[]? posts;
+    private Post? votePost;
+    @inject NavigationManager NavigationManager;
+
+    protected override async Task OnInitializedAsync()
+    {
+        posts = await apiService.getPosts();
+        posts = posts.OrderByDescending(p => p.Date).ToArray();
+    }
+
+    private async void Upvote(int id)
+    {
+        var updatedPost = await apiService.UpvotePost(id);
+        var post = posts.FirstOrDefault(p => p.PostId == id);
+        StateHasChanged();
+        NavigationManager.NavigateTo("/", true);
+    }
+
+    private async void Downvote(int id)
+    {
+        var updatedPost = await apiService.DownvotePost(id);
+        var post = posts.FirstOrDefault(p => p.PostId == id);
+        StateHasChanged();
+        NavigationManager.NavigateTo("/", true);
+    }
+    private bool IsValidUrl(string url)
+    {
+        return Uri.TryCreate(url, UriKind.Absolute, out Uri? uriResult)
+            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+    }
+}

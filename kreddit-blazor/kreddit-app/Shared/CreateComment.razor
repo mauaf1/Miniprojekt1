@@ -1,0 +1,39 @@
+@using kreddit_app.Data;
+@inject ApiService apiService
+
+<div>
+    <h3>Write a comment</h3>
+    <input placeholder="Content" type="input" @bind-value="content" />
+    <input placeholder="User" type="input" @bind-value="User" />
+    <button @onclick="CreateNewComment">Post comment</button>
+</div>
+
+@code {
+    @inject NavigationManager NavigationManager;
+    // PostId is passed in from the parent component. See how in PostItem.razor.
+    [Parameter]
+    public int PostId { get; set; }
+    private string? content;
+    private string? User;
+    private async void CreateNewComment()
+    {
+        if (content == null)
+        {
+            return;
+        }
+        DateTime currentDate = DateTime.Now;
+        int upvote = 0;   // Default value for new comments
+        int downvote = 0; // Default value for new comments
+
+        // TODO: Provide list of users from dropdown, or maybe just convert
+        // from username to UserId
+        await apiService.CreateComment(User, currentDate, content, upvote, downvote, PostId); 
+
+        content = string.Empty;
+        User = string.Empty;
+
+        StateHasChanged();
+        NavigationManager.NavigateTo($"/post/{PostId}", true);
+
+    }
+}
